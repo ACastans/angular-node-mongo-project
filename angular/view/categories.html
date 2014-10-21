@@ -1,0 +1,9 @@
+<ul class="nav nav-sidebar">
+
+	<li ng-repeat="category in categories" ng-class="{'active': ctrl.checkCategory.isCurrentCategory(category)}">
+
+		<a href="#" ng-click="ctrl.checkCategory.setCurrentCategory(category)">{{ category.name }}</a>
+
+	</li>
+
+</ul>
