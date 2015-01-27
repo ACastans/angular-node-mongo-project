@@ -1,8 +1,8 @@
-<div ng-repeat="bookmark in bookmarks | filter:{category:currentCategory.name}" ng-class="{'active' : ctrl.crud.isSelectedBookmark(bookmark._id)}">
+<div ng-repeat="bookmark in ctrl.bookmarks | filter:{category:ctrl.currentCategory.name}" ng-class="{'active' : ctrl.isSelectedBookmark(bookmark._id)}">
 
-	<button type="button" class="close" ng-click="ctrl.crud.deleteBookmark(bookmark)">&times;</button>
+	<button type="button" class="close" ng-click="ctrl.deleteBookmark(bookmark)">&times;</button>
 
-	<button ng-click="ctrl.states.startEditing(bookmark);" type="button" class="btn btn-link">
+	<button ng-click="ctrl.startEditing(bookmark);" type="button" class="btn btn-link">
 
 		<span class="glyphicon glyphicon-pencil"></span>
 

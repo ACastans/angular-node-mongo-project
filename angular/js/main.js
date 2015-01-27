@@ -12,7 +12,6 @@ if(!_mongo){
 	var _categoriesService 	= 'http://localhost:8001/categories';
 	var _bookmarksService 	= 'http://localhost:8001/bookmarks';
 }
-
 /* node & mongo */
 
 
@@ -27,27 +26,75 @@ if(!_mongo){
 
 	'use strict';
 
-	var MainCtrl = function($rootScope, handleData, crud, checkCategory, states){
+	var MainCtrl = function($rootScope, handleData, crud, checkCategory){
 
-      	$rootScope.isCreating 		= false;
-      	$rootScope.isEditing 		= false;
-      	$rootScope.editedBookmark 	= null;
-      	$rootScope.categories 		= null;
-      	$rootScope.bookmarks  		= null;
+		/* var */
+		this.categories 		= handleData.categories;
+		this.bookmarks 			= handleData.bookmarks;
 
-	    this.checkCategory		= checkCategory;
-		this.crud				= crud;
-		this.states 			= states;
-		this.handleData 		= handleData;
+		this.currentCategory  	= checkCategory.currentCategory;
+
+		this.editedBookmark 	= crud.editedBookmark;
+		this.isCreating 		= crud.isCreating;
+      	this.isEditing 			= crud.isEditing;
+		this.newbookmark 		= crud.newbookmark
+
+
+
+		/* function */
+		this.setCurrentCategory 	= angular.bind(this, function(category){
+			this.currentCategory = checkCategory.setCurrentCategory(category);
+		});
+		this.getData				= handleData.getData;
+		this.isCurrentCategory 		= checkCategory.isCurrentCategory;
+		this.isSelectedBookmark 	= crud.isSelectedBookmark;
+
+
+		//creating
+		this.shouldShowCreatingBtn 	= crud.shouldShowCreatingBtn;
+		this.shouldShowCreating 	= crud.shouldShowCreating;
+
+		this.startCreating 		= angular.bind(this, function(category){
+			crud.startCreating(category);
+			this.newbookmark = crud.newbookmark;
+		});
+
+		this.createBookmark 		= crud.createBookmark;
+		this.cancelCreating 		= crud.cancelCreating;
+
+
+		//editing
+		this.shouldShowEditing 		= crud.shouldShowEditing;
+
+		this.startEditing 			= angular.bind(this, function(thisBookmark){
+			crud.startEditing(thisBookmark);
+			this.editedBookmark = crud.editedBookmark;
+		});
+
+		this.editBookmark 			= crud.editBookmark;
+		this.cancelEditing 			= crud.cancelEditing;
+
+
+		//deleting
+		this.deleteBookmark 		= angular.bind(this, function(bookmark){
+			crud.deleteBookmark(bookmark);
+		});
+
+
+
 
 		// start
-		this.handleData.getData(_categoriesService, _bookmarksService);
+		var _init = angular.bind(this,function(){
+			this.categories 		= handleData.categories;
+			this.bookmarks 			= handleData.bookmarks;
+		});
+		this.getData(_categoriesService, _bookmarksService, _init);
 
 	};
 	
 	angular
 		.module('myFirstApp')
-		.controller('MainCtrl', ['$rootScope', 'handleData', 'crud', 'checkCategory', 'states', MainCtrl]);
+		.controller('MainCtrl', ['$rootScope', 'handleData', 'crud', 'checkCategory', MainCtrl]);
 
 })(window, document);
 
@@ -62,21 +109,23 @@ if(!_mongo){
 
 	'use strict';
 
-	var checkCategory = function($rootScope, states){
+	var checkCategory = function($rootScope, crud){
 
 		var checkCategory = {};
 
-			$rootScope.currentCategory = null;
+			checkCategory.currentCategory = null;
 
 			checkCategory.isCurrentCategory = function(category) {
-        		return $rootScope.currentCategory !== null && category.name === $rootScope.currentCategory.name;
+        		return checkCategory.currentCategory !== null && category.name === checkCategory.currentCategory.name;
       		};
 
       		checkCategory.setCurrentCategory = function(category) {
-        		$rootScope.currentCategory = category;
+        		checkCategory.currentCategory = category;
 
-          		states.cancelCreating();
-          		states.cancelEditing();
+          		crud.cancelCreating();
+          		crud.cancelEditing();
+
+          		return checkCategory.currentCategory;
       		};
 
       	return checkCategory;
@@ -84,7 +133,7 @@ if(!_mongo){
 
 	angular
 		.module('myFirstApp')
-		.factory('checkCategory', ['$rootScope', 'states', checkCategory]);
+		.factory('checkCategory', ['$rootScope', 'crud', checkCategory]);
 
 })(window, document);
 
@@ -103,13 +152,21 @@ if(!_mongo){
 			handleData.categories 	= [];
 			handleData.bookmarks 	= [];
 
-			handleData.getData = function(categoriesUrl, bookmarksUrl){
-				$http({method:'GET', url: categoriesUrl})
+			handleData.getData = function(categoriesUrl, bookmarksUrl, callback){
+				$http({
+						method:'GET',
+						url: categoriesUrl
+					})
 					.success(function(data){
-						$rootScope.categories = data;
-					}).then(function(){
+						handleData.categories = data;
+					})
+					.then(function(){
 						$http({method:'GET', url: bookmarksUrl}).success(function(data){
-							$rootScope.bookmarks = data;
+							handleData.bookmarks = data;
+
+							if(callback){
+								callback();
+							}
 						})
 					});
 			};
@@ -157,28 +214,60 @@ if(!_mongo){
 
 		var crud = {};
 
-			crud.resetCreateForm= function() {
-		        $rootScope.newBookmark = {
+			crud.newbookmark 			= null;
+			crud.editedBookmark 		= null;
+			crud.isCreating 			= false;
+			crud.isEditing 				= false;
+		
+			crud.isSelectedBookmark = function(bookmarkId){
+				return crud.editedBookmark !== null && crud.editedBookmark._id === bookmarkId;
+			};
+
+			//creating
+			crud.shouldShowCreatingBtn = function(category) {
+	      	    return category && !crud.isEditing;
+	      	};
+	      	crud.shouldShowCreating = function(){
+	      		return crud.isCreating && !crud.isEditing;
+	      	}
+
+	      	crud.startCreating = function(category) {
+	      	    crud.isCreating = true;
+	      	    crud.isEditing 	= false;
+
+	      	    crud.newbookmark = {
+	      	    	_id: (handleData.bookmarks.length + 1),
 		            title: '',
 		            url: '',
-		            category: $rootScope.currentCategory.name
+		            category: category.name
 		        };
-		    };
-
-		    crud.createBookmark = function(newbookmark) {
-		        $rootScope.bookmarks.push(newbookmark);
+	      	};
+	      	crud.createBookmark = function(newbookmark) {
+		        handleData.bookmarks.push(newbookmark);
 
 		        if(_mongo){
 		        	handleData.postData("add", newbookmark, _bookmarksService);	
 		        }
-		        
-	       		crud.resetCreateForm();
-
-	       		$rootScope.isCreating 	= false;
+		       
+	       		crud.cancelCreating();
 	    	};
-		
+	      	crud.cancelCreating = function(){
+	      	    crud.isCreating 	= false;
+	      	    crud.newbookmark 	= null;
+	      	};
+
+	      	//editing
+	      	crud.shouldShowEditing = function() {
+	      	    return crud.isEditing && !crud.isCreating;
+	      	};
+	      	crud.startEditing = function(thisBookmark) {
+	      	    crud.isCreating = false;
+	      	    crud.isEditing 	= true;
+
+	      	    crud.editedBookmark = angular.copy(thisBookmark);
+	      	};
 			crud.editBookmark = function(thisBookmark){
-				var index = _.findIndex($rootScope.bookmarks, function(b){
+				var index = _.findIndex(handleData.bookmarks, function(b){
 					return b._id == thisBookmark._id;
 				});
 
@@ -186,25 +275,27 @@ if(!_mongo){
 					handleData.postData("update", thisBookmark, _bookmarksService);
 				}
 
-				$rootScope.bookmarks[index] = thisBookmark;
-				$rootScope.editedBookmark	= null;
-				$rootScope.isEditing		= false;
+				handleData.bookmarks[index] = thisBookmark;
+				crud.editedBookmark			= null;
+				crud.isEditing				= false;
 			};
+	      	crud.cancelEditing = function() {
+	      	    crud.isEditing 		= false;
+	      	    crud.editedBookmark = null;
+	      	};
 
-			crud.isSelectedBookmark = function(bookmarkId){
-				return $rootScope.editedBookmark !== null && $rootScope.editedBookmark._id === bookmarkId;
-			};
+	      	//deleting
+	      	crud.deleteBookmark = function(bookmark){
 
-			crud.deleteBookmark = function(bookmark){
-				var _deletedBookmark = _.remove($rootScope.bookmarks, function(b){
+				var _deletedBookmark = _.remove(handleData.bookmarks, function(b){
 					return b._id == bookmark._id;
 				});
 
 				if(_mongo){
 					handleData.postData("delete", _deletedBookmark[0], _bookmarksService);	
 				}
-				
 			};
+
 
 		return crud; 
 	};
@@ -212,54 +303,5 @@ if(!_mongo){
 	angular
 		.module('myFirstApp')
 		.factory('crud',['$rootScope', 'handleData', crud])
-
-})(window, document);
-
-
-/*
- * name : states
- */
-
-(function(global, doc, undefined){
-
-	var states = function($rootScope, crud){
-		var states = {};
-
-			states.shouldShowCreating = function() {
-	      	    return $rootScope.currentCategory && !$rootScope.isEditing;
-	      	};
-
-	      	states.startCreating = function() {
-	      	    $rootScope.isCreating 	= true;
-	      	    $rootScope.isEditing 	= false;
-	      	    crud.resetCreateForm();
-	      	};
-
-	      	states.cancelCreating = function() {
-	      	    $rootScope.isCreating = false;
-	      	};
-
-	      	states.shouldShowEditing = function() {
-	      	    return $rootScope.isEditing && !$rootScope.isCreating;
-	      	};
-
-	      	states.startEditing = function(thisBookmark) {
-	      	    $rootScope.isCreating 	= false;
-	      	    $rootScope.isEditing 	= true;
-
-	      	    $rootScope.editedBookmark = angular.copy(thisBookmark);
-	      	};
-
-	      	states.cancelEditing = function() {
-	      	    $rootScope.isEditing 		= false;
-	      	    $rootScope.editedBookmark 	= null;
-	      	};
-
-	     return states;
-	};
-
-	angular
-		.module('myFirstApp')
-		.factory('states', ['$rootScope', 'crud', states])
 
 })(window, document);

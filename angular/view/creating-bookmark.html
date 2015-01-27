@@ -1,27 +1,27 @@
-<div ng-if="ctrl.states.shouldShowCreating()">
+<div ng-if="ctrl.shouldShowCreatingBtn(ctrl.currentCategory)">
     <hr/>
-	<button type="button" class="btn btn-link" ng-click="ctrl.states.startCreating();">
+	<button type="button" class="btn btn-link" ng-click="ctrl.startCreating(ctrl.currentCategory);">
 
 		<span class="glyphicon glyphicon-plus"></span>
 		Create Bookmark
 
 	</button>
 
-    <form class="create-form" ng-show="isCreating" role="form" ng-submit="ctrl.crud.createBookmark(newBookmark)" novalidate>
+    <form class="create-form" ng-show="ctrl.shouldShowCreating()" role="form" ng-submit="ctrl.createBookmark(ctrl.newbookmark)" novalidate>
 
         <div class="form-group">
             <label for="newBookmarkTitle">Bookmark Title</label>
-            <input type="text" class="form-control" id="newBookmarkTitle" ng-model="newBookmark.title" placeholder="Enter title">
+            <input type="text" class="form-control" id="newBookmarkTitle" ng-model="ctrl.newbookmark.title" placeholder="Enter title">
         </div>
 
         <div class="form-group">
             <label for="newBookmarkURL">Bookmark URL</label>
-            <input type="text" class="form-control" id="newBookmarkURL" ng-model="newBookmark.url" placeholder="Enter URL">
+            <input type="text" class="form-control" id="newBookmarkURL" ng-model="ctrl.newbookmark.url" placeholder="Enter URL">
         </div>
 
         <button type="submit" class="btn btn-info btn-lg">Create</button>
 
-        <button type="button" class="btn btn-default btn-lg pull-right" ng-click="ctrl.states.cancelCreating()">Cancel</button>
+        <button type="button" class="btn btn-default btn-lg pull-right" ng-click="ctrl.cancelCreating()">Cancel</button>
 
     </form>
 </div>	

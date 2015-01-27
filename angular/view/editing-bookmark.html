@@ -1,23 +1,23 @@
-<div ng-if="ctrl.states.shouldShowEditing()">
+<div ng-if="ctrl.shouldShowEditing()">
     <hr/>
 
-    <h4>Editing <strong>{{editedBookmark.title}}</strong> :</h4>
+    <h4>Editing <strong>{{ctrl.editedBookmark.title}}</strong> :</h4>
 
-    <form class="edit-form" role="form" ng-submit="ctrl.crud.editBookmark(editedBookmark)" novalidate>
+    <form class="edit-form" role="form" ng-submit="ctrl.editBookmark(ctrl.editedBookmark)" novalidate>
 
         <div class="form-group">
             <label for="thisBookmarkTitle">Bookmark Title</label>
-            <input type="text" class="form-control" id="thisBookmarkTitle" ng-model="editedBookmark.title" placeholder="{{editedBookmark.title}}">
+            <input type="text" class="form-control" id="thisBookmarkTitle" ng-model="ctrl.editedBookmark.title" placeholder="{{ctrl.editedBookmark.title}}">
         </div>
 
         <div class="form-group">
             <label for="thisBookmarkURL">Bookmark URL</label>
-            <input type="text" class="form-control" id="thisBookmarkURL" ng-model="editedBookmark.url" placeholder="{{editedBookmark.url}}">
+            <input type="text" class="form-control" id="thisBookmarkURL" ng-model="ctrl.editedBookmark.url" placeholder="{{ctrl.editedBookmark.url}}">
         </div>
 
         <button type="submit" class="btn btn-info btn-lg">Edit</button>
 
-        <button type="button" class="btn btn-default btn-lg pull-right" ng-click="ctrl.states.cancelEditing()">Cancel</button>
+        <button type="button" class="btn btn-default btn-lg pull-right" ng-click="ctrl.cancelEditing()">Cancel</button>
 
     </form>
 </div>
